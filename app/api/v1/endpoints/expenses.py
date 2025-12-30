@@ -15,6 +15,7 @@ router = APIRouter()
 @router.post("/expenses",response_model=ExpenseResponse,status_code=status.HTTP_201_CREATED)
 def create_expense(expense_in: ExpenseCreate,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
     expense = Expense(**expense_in.model_dump(),user_id=current_user.id)
+    
     db.add(expense)
     db.commit()
     db.refresh(expense)
@@ -26,23 +27,9 @@ def list_expenses(db: Session = Depends(get_db),current_user: User = Depends(get
     return (db.query(Expense).filter(Expense.user_id == current_user.id).order_by(Expense.created_at.desc()).all())
 
 
-@router.get(
-    "/expenses/{expense_id}",
-    response_model=ExpenseResponse,
-)
-def get_expense(
-    expense_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    expense = (
-        db.query(Expense)
-        .filter(
-            Expense.id == expense_id,
-            Expense.user_id == current_user.id,
-        )
-        .first()
-    )
+@router.get("/expenses/{expense_id}",response_model=ExpenseResponse,)
+def get_expense(expense_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
 
     if not expense:
         raise HTTPException(
@@ -53,24 +40,9 @@ def get_expense(
     return expense
 
 
-@router.put(
-    "/expenses/{expense_id}",
-    response_model=ExpenseResponse,
-)
-def update_expense(
-    expense_id: int,
-    expense_in: ExpenseUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    expense = (
-        db.query(Expense)
-        .filter(
-            Expense.id == expense_id,
-            Expense.user_id == current_user.id,
-        )
-        .first()
-    )
+@router.put("/expenses/{expense_id}",response_model=ExpenseResponse)
+def update_expense(expense_id: int,expense_in: ExpenseUpdate,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
 
     if not expense:
         raise HTTPException(
@@ -86,23 +58,9 @@ def update_expense(
     return expense
 
 
-@router.delete(
-    "/expenses/{expense_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def delete_expense(
-    expense_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    expense = (
-        db.query(Expense)
-        .filter(
-            Expense.id == expense_id,
-            Expense.user_id == current_user.id,
-        )
-        .first()
-    )
+@router.delete("/expenses/{expense_id}",status_code=status.HTTP_204_NO_CONTENT)
+def delete_expense(expense_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
 
     if not expense:
         raise HTTPException(
