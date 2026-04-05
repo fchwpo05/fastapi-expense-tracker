@@ -37,9 +37,7 @@ def list_expenses(
     end_date: date | None = None,
     sort: str = Query("desc", regex="^(asc|desc)$"),
 ):
-    query = db.query(Expense).filter(
-        Expense.user_id == current_user.id
-    )
+    query = db.query(Expense).filter(Expense.user_id == current_user.id)
 
     if category:
         query = query.filter(Expense.category == category)

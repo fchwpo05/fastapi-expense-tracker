@@ -20,15 +20,23 @@ class ExpenseBase(BaseModel):
     @field_validator("amount")
     @classmethod
     def amount_must_be_positive(cls, v):
+        if v is None:
+            raise ValueError("Amount cannot be null")
+
         if v <= 0:
             raise ValueError("Amount must be greater than 0")
+
         return v
 
     @field_validator("title")
     @classmethod
     def title_not_empty(cls, v):
+        if v is None:
+            raise ValueError("Title cannot be null")
+
         if not v.strip():
             raise ValueError("Title cannot be empty")
+
         return v
 
 class ExpenseCreate(ExpenseBase):
