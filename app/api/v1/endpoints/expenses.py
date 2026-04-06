@@ -6,10 +6,11 @@ from fastapi import Query
 
 from app.db.session import get_db
 from app.db.models.expense import Expense
-from app.schemas import ExpenseCreate,ExpenseUpdate,ExpenseResponse
+from app.schemas import ExpenseCreate,ExpenseUpdate,ExpenseResponse,ExpenseListResponse
 from app.core.dependencies import get_current_user
 from app.db.models.user import User
 from app.schemas.expense import ExpenseCategory
+from app.services import expense_service
 
 
 router = APIRouter()
@@ -17,15 +18,14 @@ router = APIRouter()
 
 @router.post("/expenses",response_model=ExpenseResponse,status_code=status.HTTP_201_CREATED)
 def create_expense(expense_in: ExpenseCreate,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    expense = Expense(**expense_in.model_dump(),user_id=current_user.id)
-    
-    db.add(expense)
-    db.commit()
-    db.refresh(expense)
-    return expense
+    return expense_service.create_expense(
+        db=db,
+        user_id=current_user.id,
+        data=expense_in,
+    )
 
 
-@router.get("/expenses",response_model=List[ExpenseResponse])
+@router.get("/expenses",response_model=ExpenseListResponse)
 def list_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -37,28 +37,33 @@ def list_expenses(
     end_date: date | None = None,
     sort: str = Query("desc", regex="^(asc|desc)$"),
 ):
-    query = db.query(Expense).filter(Expense.user_id == current_user.id)
+    items, total, next_offset = expense_service.get_expenses(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+        offset=offset,
+        category=category,
+        start_date=start_date,
+        end_date=end_date,
+        sort=sort,
+    )
 
-    if category:
-        query = query.filter(Expense.category == category)
-
-    if start_date:
-        query = query.filter(Expense.created_at >= start_date)
-
-    if end_date:
-        query = query.filter(Expense.created_at <= end_date)
-
-    if sort == "asc":
-        query = query.order_by(Expense.created_at.asc())
-    else:
-        query = query.order_by(Expense.created_at.desc())
-
-    return query.offset(offset).limit(limit).all()
+    return {
+        "items": items,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "next_offset": next_offset,
+    }
 
 
 @router.get("/expenses/{expense_id}",response_model=ExpenseResponse,)
 def get_expense(expense_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
+    expense = expense_service.get_expense(
+        db=db,
+        user_id=current_user.id,
+        expense_id=expense_id,
+    )
 
     if not expense:
         raise HTTPException(
@@ -71,7 +76,11 @@ def get_expense(expense_id: int,db: Session = Depends(get_db),current_user: User
 
 @router.put("/expenses/{expense_id}",response_model=ExpenseResponse)
 def update_expense(expense_id: int,expense_in: ExpenseUpdate,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
+    expense = expense_service.get_expense(
+        db=db,
+        user_id=current_user.id,
+        expense_id=expense_id,
+    )
 
     if not expense:
         raise HTTPException(
@@ -79,17 +88,20 @@ def update_expense(expense_id: int,expense_in: ExpenseUpdate,db: Session = Depen
             detail="Expense not found",
         )
 
-    for field, value in expense_in.model_dump(exclude_unset=True).items():
-        setattr(expense, field, value)
-
-    db.commit()
-    db.refresh(expense)
-    return expense
+    return expense_service.update_expense(
+        db=db,
+        expense=expense,
+        data=expense_in,
+    )
 
 
 @router.delete("/expenses/{expense_id}",status_code=status.HTTP_204_NO_CONTENT)
 def delete_expense(expense_id: int,db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):
-    expense = (db.query(Expense).filter(Expense.id == expense_id,Expense.user_id == current_user.id).first())
+    expense = expense_service.get_expense(
+        db=db,
+        user_id=current_user.id,
+        expense_id=expense_id,
+    )
 
     if not expense:
         raise HTTPException(
@@ -97,6 +109,5 @@ def delete_expense(expense_id: int,db: Session = Depends(get_db),current_user: U
             detail="Expense not found",
         )
 
-    db.delete(expense)
-    db.commit()
+    expense_service.delete_expense(db=db, expense=expense)
     return None

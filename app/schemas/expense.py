@@ -2,6 +2,7 @@ from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from typing import List
 
 class ExpenseCategory(str, Enum):
     FOOD = "Food"
@@ -56,3 +57,10 @@ class ExpenseResponse(ExpenseBase):
     model_config = {
         "from_attributes": True
     }
+
+class ExpenseListResponse(BaseModel):
+    items: List[ExpenseResponse]
+    total: int
+    limit: int
+    offset: int
+    next_offset: int | None

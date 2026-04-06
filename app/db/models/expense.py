@@ -1,25 +1,41 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Index
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+from sqlalchemy import String, Float, DateTime, ForeignKey, Index, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.db.base import Base
-
+if TYPE_CHECKING:
+    from app.db.models.user import User
 
 class Expense(Base):
     __tablename__ = "expenses"
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    amount = Column(Float, nullable=False)
-    category = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    category: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
 
-    user = relationship("User", back_populates="expenses")
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="expenses"
+    )
 
     __table_args__ = (
         Index("idx_expenses_user_id", "user_id"),
         Index("idx_expenses_created_at", "created_at"),
         Index("idx_expenses_user_created", "user_id", "created_at"),
     )
+
+
+
