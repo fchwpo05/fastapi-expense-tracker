@@ -12,7 +12,7 @@ from app.db.session import get_db
 
 #TEST database
 SQLALCHEMY_DATABASE_URL = (
-    "postgresql+psycopg2://postgres:rules%401234@localhost:5432/expense_db_test"
+    "postgresql+psycopg2://postgres:rules%401234@localhost:5432/expense_tracker_test"
 )
 
 # Test engine
@@ -53,5 +53,32 @@ def client(db):
     with TestClient(app) as test_client:
         try: 
             yield test_client
-        finally:
+        finally: 
             app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers(client):
+    client.post(
+        "/api/v1/users/signup",
+        json={
+            "email": "auth@example.com",
+            "name": "Auth User",
+            "password": "secret123"
+        }
+    )
+
+    response = client.post(
+        "/api/v1/users/login",
+        json={
+            "email": "auth@example.com",
+            "name": "Auth User",
+            "password": "secret123"
+        }
+    )
+
+    token = response.json()["access_token"]
+
+    return {
+        "Authorization": f"Bearer {token}"
+    }
