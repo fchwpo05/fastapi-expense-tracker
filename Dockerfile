@@ -1,22 +1,24 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-WORKDIR /app
-
+# Prevent Python from writing .pyc files
+# and ensure logs are sent directly to the container output.
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    curl \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
+# Install Python dependencies first so Docker can cache this layer.
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application source code.
 COPY . .
+
+# Create a non-root user for running the application.
+RUN useradd --create-home appuser
+
+USER appuser
 
 EXPOSE 8000
 
