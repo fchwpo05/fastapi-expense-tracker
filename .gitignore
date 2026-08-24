@@ -1,6 +1,7 @@
 # Environment variables / secrets
 .env
 .env.docker
+.env.prod
 
 # Python
 __pycache__/
