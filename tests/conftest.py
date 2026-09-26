@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,8 +11,9 @@ from app.db.base import Base
 from app.db.session import get_db
 
 
-#TEST database
-SQLALCHEMY_DATABASE_URL = (
+# Test database
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
     "postgresql+psycopg2://postgres:rules%401234@localhost:5432/expense_tracker_test"
 )
 
