@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/expense_tracker_test
+      SECRET_KEY: ci-test-secret-key
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
