@@ -14,7 +14,22 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/expense_tracker_test
-      SECRET_KEY: ci-test-secret-key
+      SECRET_KEY: ci-test-secret-key-2026
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: expense_tracker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d expense_tracker_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout repository
