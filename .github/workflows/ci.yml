@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+
     env:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/expense_tracker_test
       TEST_DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/expense_tracker_test
@@ -50,3 +54,10 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t fastapi-expense-tracker .      
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
