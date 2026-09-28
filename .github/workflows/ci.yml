@@ -67,6 +67,14 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker tag fastapi-expense-tracker ghcr.io/fchwpo05/fastapi-expense-tracker:latest
 
+      - name: Tag Docker image with commit SHA
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker tag fastapi-expense-tracker ghcr.io/fchwpo05/fastapi-expense-tracker:${{ github.sha }}
+
       - name: Push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker push ghcr.io/fchwpo05/fastapi-expense-tracker:latest
+
+      - name: Push Docker image with commit SHA
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push ghcr.io/fchwpo05/fastapi-expense-tracker:${{ github.sha }}
